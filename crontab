@@ -1,0 +1,5 @@
+// crontab cron cleanup docker postgres
+CLEAN_LOG_PATH=/var/log/cron-cleanup.log
+
+45 1 * * 0   root nice -n 19  if ! hash psql 2>/dev/null; then su - postgres -c " echo $(date) && vacuumdb --all --full --analyze" 2>&1 >> $CLEAN_LOG_PATH; fi
+45 1 * * 1-6 root nice -n 19  bash -c "echo $(date) && docker system prune -af && docker network prune -f" 2>&1 >> $CLEAN_LOG_PATH && if ! hash psql 2>/dev/null; then su - postgres -c "vacuumdb --all --analyze --quiet" 2>&1 >> $CLEAN_LOG_PATH; fi
