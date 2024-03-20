@@ -1,0 +1,50 @@
+cat /etc/nginx/sites-available/domen.localhost.ru
+# PORT FORWADER
+
+upstream domen {
+    server 192.168.0.2:80;
+}
+
+server {
+    allow 192.168.0.1;
+    deny all;
+ 
+    access_log /var/log/nginx/domen.access.log;
+    error_log /var/log/nginx/domen.error.log;
+
+    location / {
+
+                proxy_pass         http://domen;
+                client_max_body_size 1900m;
+                proxy_ssl_verify on;
+                proxy_set_header Host $http_host;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "Upgrade";
+                proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/hrbr.npc-ksb.ru/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/hrbr.npc-ksb.ru/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+}
+
+
+
+server {
+    client_max_body_size 0;
+
+    if ($host = domen.localhost.ru ) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name domen.localhost.ru;
+    return 404; # managed by Certbot
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+}
